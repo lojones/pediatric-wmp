@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pediatric Weight Management - Care Models Explorer</title>
+    <style>
+        :root {
+            --primary: #4A90D9;
+            --primary-dark: #2C5F8A;
+            --secondary: #6BC5A0;
+            --accent: #F5A623;
+            --accent2: #E74C6F;
+            --bg: #F0F4F8;
+            --card: #FFFFFF;
+            --text: #2D3748;
+            --text-light: #718096;
+            --border: #E2E8F0;
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.12);
+            --radius: 16px;
+            --model-a: #4A90D9;
+            --model-b: #6BC5A0;
+            --model-c: #F5A623;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--secondary) 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .header h1 { font-size: 2.2em; font-weight: 700; position: relative; z-index: 1; }
+        .header p { font-size: 1.1em; opacity: 0.9; margin-top: 8px; position: relative; z-index: 1; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        .metrics-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .metric-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover { transform: translateY(-2px); }
+        .metric-value { font-size: 2em; font-weight: 800; color: var(--primary); }
+        .metric-label { font-size: 0.85em; color: var(--text-light); margin-top: 4px; }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin: 30px 0 20px;
+            flex-wrap: wrap;
+            background: var(--card);
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 140px;
+            text-align: center;
+        }
+
+        .nav-tab:hover { background: var(--bg); color: var(--text); }
+        .nav-tab.active { background: var(--primary); color: white; box-shadow: 0 2px 10px rgba(74,144,217,0.3); }
+
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 24px;
+            margin: 20px 0;
+        }
+
+        .model-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .model-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-4px); }
+
+        .model-card-header { padding: 24px; color: white; }
+        .model-a .model-card-header { background: linear-gradient(135deg, #4A90D9, #357ABD); }
+        .model-b .model-card-header { background: linear-gradient(135deg, #6BC5A0, #4AA87C); }
+        .model-c .model-card-header { background: linear-gradient(135deg, #F5A623, #E09100); }
+
+        .model-card-header h3 { font-size: 1.3em; margin-bottom: 4px; }
+        .model-card-header .subtitle { opacity: 0.9; font-size: 0.9em; }
+        .model-card-body { padding: 24px; }
+
+        .model-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .model-stat-row:last-child { border-bottom: none; }
+        .stat-label { color: var(--text-light); font-size: 0.9em; }
+        .stat-value { font-weight: 700; font-size: 1.05em; }
+
+        .progress-container { margin: 12px 0; }
+        .progress-label { display: flex; justify-content: space-between; font-size: 0.85em; margin-bottom: 4px; }
+
+        .progress-bar {
+            height: 12px;
+            background: var(--bg);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .chart-container {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin: 20px 0;
+        }
+
+        .chart-title { font-size: 1.1em; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 16px 0;
+            font-size: 0.9em;
+        }
+
+        .schedule-table th {
+            background: var(--primary);
+            color: white;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .schedule-table th:first-child { border-radius: 10px 0 0 0; }
+        .schedule-table th:last-child { border-radius: 0 10px 0 0; }
+        .schedule-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+        .schedule-table tr:hover td { background: rgba(74,144,217,0.05); }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .badge-group { background: #E8F5E9; color: #2E7D32; }
+        .badge-individual { background: #E3F2FD; color: #1565C0; }
+
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            height: 250px;
+            padding: 20px 0;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .bar-group {
+            flex: 1;
+            display: flex;
+            gap: 6px;
+            align-items: flex-end;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .bar {
+            width: 30px;
+            min-width: 20px;
+            border-radius: 6px 6px 0 0;
+            transition: height 1s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .bar:hover { opacity: 0.8; }
+
+        .bar-value {
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: 700;
+            font-size: 0.75em;
+            white-space: nowrap;
+        }
+
+        .comparison-table-wrapper { overflow-x: auto; margin: 20px 0; }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--card);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            min-width: 700px;
+        }
+
+        .comparison-table th {
+            padding: 16px;
+            font-weight: 700;
+            text-align: center;
+            color: white;
+            font-size: 0.95em;
+        }
+
+        .comparison-table th:first-child { background: #4A5568; text-align: left; }
+        .comparison-table th:nth-child(2) { background: var(--model-a); }
+        .comparison-table th:nth-child(3) { background: var(--model-b); }
+        .comparison-table th:nth-child(4) { background: var(--model-c); }
+
+        .comparison-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .comparison-table td:first-child { text-align: left; font-weight: 600; }
+        .comparison-table tr:hover td { background: rgba(74,144,217,0.03); }
+
+        .star { color: #F5A623; font-size: 1.1em; }
+        .star.empty { color: #E2E8F0; }
+
+        .staff-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .staff-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .staff-card:hover { transform: translateY(-2px); }
+
+        .staff-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 1.5em;
+        }
+
+        .staff-name { font-weight: 700; margin-bottom: 4px; }
+        .staff-fte { color: var(--text-light); font-size: 0.85em; }
+        .staff-hours { font-weight: 600; color: var(--primary); margin-top: 8px; }
+
+        .info-box {
+            background: linear-gradient(135deg, #FFF8E1, #FFF3C4);
+            border-left: 4px solid var(--accent);
+            border-radius: 0 12px 12px 0;
+            padding: 20px 24px;
+            margin: 20px 0;
+        }
+
+        .info-box h4 { color: #8B6914; margin-bottom: 8px; }
+        .info-box p { color: #6B5317; font-size: 0.95em; }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 30px 0;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .flow-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            min-width: 100px;
+        }
+
+        .flow-box {
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.82em;
+            font-weight: 600;
+            text-align: center;
+            color: white;
+            min-width: 90px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .flow-arrow { font-size: 1.5em; color: var(--text-light); }
+
+        .proscons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .pros, .cons { padding: 16px; border-radius: 12px; }
+        .pros { background: #E8F5E9; }
+        .cons { background: #FFEBEE; }
+        .pros h4 { color: #2E7D32; margin-bottom: 8px; }
+        .cons h4 { color: #C62828; margin-bottom: 8px; }
+        .pros li, .cons li { font-size: 0.9em; margin: 6px 0; margin-left: 16px; }
+
+        .slider-section {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin: 20px 0;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+
+        .slider-label { min-width: 200px; font-weight: 600; }
+
+        .slider-input {
+            flex: 1;
+            min-width: 200px;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            outline: none;
+        }
+
+        .slider-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+
+        .slider-value { min-width: 60px; text-align: right; font-weight: 700; color: var(--primary); }
+
+        .capacity-result {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .capacity-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .capacity-card .big-num { font-size: 2.2em; font-weight: 800; }
+        .capacity-card.green .big-num { color: #2E7D32; }
+        .capacity-card.red .big-num { color: #C62828; }
+        .capacity-card.blue .big-num { color: var(--primary); }
+        .capacity-card.orange .big-num { color: #E09100; }
+
+        .donut-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+        }
+
+        .donut-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .donut-wrapper { position: relative; width: 180px; height: 180px; }
+
+        .donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .donut-center .value { font-size: 1.8em; font-weight: 800; }
+        .donut-center .label { font-size: 0.75em; color: var(--text-light); }
+
+        .donut-legend {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.85em; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+        .rec-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin: 12px 0;
+            border-left: 4px solid var(--primary);
+            transition: transform 0.2s;
+        }
+        .rec-card:hover { transform: translateX(4px); }
+        .rec-card h4 { margin-bottom: 6px; }
+        .rec-card p { font-size: 0.9em; color: var(--text-light); }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.5em; }
+            .models-grid { grid-template-columns: 1fr; }
+            .nav-tab { padding: 10px 16px; font-size: 0.85em; min-width: 100px; }
+            .bar-chart { height: 200px; }
+            .flow-diagram { flex-direction: column; }
+            .flow-arrow { transform: rotate(90deg); }
+            .proscons { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🏥 Pediatric Weight Management Program</h1>
+    <p>Interactive Care Model Explorer — 3 Options for Delivering ≥25 Hours Over 2 Years</p>
+</div>
+
+<div class="container">
+    <!-- Key Metrics -->
+    <div class="metrics-bar">
+        <div class="metric-card">
+            <div class="metric-value">400</div>
+            <div class="metric-label">Active Patients / Year</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">200</div>
+            <div class="metric-label">New Patients / Year</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">25 hrs</div>
+            <div class="metric-label">Min Care Hours (2 yrs)</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">7.8</div>
+            <div class="metric-label">Total Team FTE</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">~10,920</div>
+            <div class="metric-label">Available Clinical Hrs/Yr</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">15%</div>
+            <div class="metric-label">ASD Cohort (1:1 Only)</div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="showTab('overview')">📊 Overview</button>
+        <button class="nav-tab" onclick="showTab('model-a')">🔵 Model A</button>
+        <button class="nav-tab" onclick="showTab('model-b')">🟢 Model B</button>
+        <button class="nav-tab" onclick="showTab('model-c')">🟡 Model C</button>
+        <button class="nav-tab" onclick="showTab('compare')">⚖️ Compare</button>
+        <button class="nav-tab" onclick="showTab('staffing')">👥 Staffing</button>
+        <button class="nav-tab" onclick="showTab('calculator')">🧮 Calculator</button>
+    </div>
+
+    <!-- ==================== OVERVIEW TAB ==================== -->
+    <div id="tab-overview" class="tab-content active">
+        <h2 style="margin-bottom:8px;">Three Care Models at a Glance</h2>
+        <p style="color:var(--text-light);margin-bottom:20px;">Click any model card to explore details, or use the tabs above to dive deep.</p>
+
+        <div class="models-grid">
+            <div class="model-card model-a" onclick="showTab('model-a')">
+                <div class="model-card-header">
+                    <h3>Model A: Group-Heavy Rotation</h3>
+                    <div class="subtitle">Maximize group sessions for efficiency</div>
+                </div>
+                <div class="model-card-body">
+                    <div class="model-stat-row"><span class="stat-label">Total Care Hours</span><span class="stat-value">28.5 hrs</span></div>
+                    <div class="model-stat-row"><span class="stat-label">Group vs 1:1</span><span class="stat-value">58% Group</span></div>
+                    <div class="model-stat-row"><span class="stat-label">Visits over 2 yrs</span><span class="stat-value">24 visits</span></div>
+                    <div class="model-stat-row"><span class="stat-label">Buffer Above Min</span><span class="stat-value" style="color:#2E7D32;">+3.5 hrs</span></div>
+                    <div class="progress-container">
+                        <div class="progress-label"><span>Group</span><span>58%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:58%;background:linear-gradient(90deg,#4A90D9,#6BC5A0);"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="model-card model-b" onclick="showTab('model-b')">
+                <div class="model-card-header">
+                    <h3>Model B: Hybrid Tiered</h3>
+                    <div class="subtitle">Intensity-matched by patient complexity</div>
+                </div>
+                <div class="model-card-body">
+                    <div class="model-stat-row"><span class="stat-label">Total Care Hours</span><span class="stat-value">26.5–28.5 hrs</span></div>
+                    <div class="model-stat-row"><span class="stat-label">Group vs 1:1</span><span class="stat-value">30–55% Group</span></div>
+                    <div class="model-stat-row"><span class="stat-label">Visits over 2 yrs</span><span class="stat-value">22–26 visits</span></div>
+                    <div class="model-stat-row"><span class="stat-label">Tiers</span><span class="stat-value">3 Levels</span></div>
+                    <div class="progress-container">
+                        <div class="progress-label"><span>Group (avg)</span><span>42%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:42%;background:linear-gradient(90deg,#6BC5A0,#4AA87C);"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="model-card model-c" onclick="showTab('model-c')">
+                <div class="model-card-header">
+                    <h3>Model C: Block Curriculum</h3>
+                    <div class="subtitle">Structured modules + individual check-ins</div>
+                </div>
+                <div class="model-card-body">
+                    <div class="model-stat-row"><span class="stat-label">Total Care Hours</span><span class="stat-value">29.5 hrs</span></div>
+                    <div class="model-stat-row"><span class="stat-label">Group vs 1:1</span><span class="stat-value">69% Group</span></div>
+                    <div class="model-stat-row"><span class="stat-label">Visits over 2 yrs</span><span class="stat-value">24 visits</span></div>
+                    <div class="model-stat-row"><span class="stat-label">Phases</span><span class="stat-value">4 × 6 months</span></div>
+                    <div class="progress-container">
+                        <div class="progress-label"><span>Group</span><span>69%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:69%;background:linear-gradient(90deg,#F5A623,#E09100);"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bar Chart -->
+        <div class="chart-container">
+            <div class="chart-title">📈 Care Hours by Discipline & Model</div>
+            <div style="display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap;">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--model-a)"></div> Model A</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--model-b)"></div> Model B (Tier 1)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--model-c)"></div> Model C</div>
+            </div>
+            <div class="bar-chart" id="hoursChart"></div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;text-align:center;margin-top:8px;">
+                <div style="font-size:0.85em;color:var(--text-light);">NP Medical</div>
+                <div style="font-size:0.85em;color:var(--text-light);">Nutrition (Total)</div>
+                <div style="font-size:0.85em;color:var(--text-light);">Activity (Total)</div>
+                <div style="font-size:0.85em;color:var(--text-light);">Mental Health</div>
+                <div style="font-size:0.85em;color:var(--text-light);">Flex/Other</div>
+            </div>
+        </div>
+
+        <!-- Donut Charts -->
+        <div class="chart-container">
+            <div class="chart-title">🍩 Group vs 1:1 Split by Model</div>
+            <div class="donut-row">
+                <div class="donut-container">
+                    <canvas id="donutA" width="180" height="180"></canvas>
+                    <div style="font-weight:700;margin-top:12px;color:var(--model-a);">Model A</div>
+                    <div class="donut-legend">
+                        <div class="legend-item"><div class="legend-dot" style="background:var(--model-a)"></div> Group 58%</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:#CBD5E0"></div> 1:1 42%</div>
+                    </div>
+                </div>
+                <div class="donut-container">
+                    <canvas id="donutB" width="180" height="180"></canvas>
+                    <div style="font-weight:700;margin-top:12px;color:var(--model-b);">Model B (avg)</div>
+                    <div class="donut-legend">
+                        <div class="legend-item"><div class="legend-dot" style="background:var(--model-b)"></div> Group 42%</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:#CBD5E0"></div> 1:1 58%</div>
+                    </div>
+                </div>
+                <div class="donut-container">
+                    <canvas id="donutC" width="180" height="180"></canvas>
+                    <div style="font-weight:700;margin-top:12px;color:var(--model-c);">Model C</div>
+                    <div class="donut-legend">
+                        <div class="legend-item"><div class="legend-dot" style="background:var(--model-c)"></div> Group 69%</div>
+                        <div class="legend-item"><div class="legend-dot" style="background:#CBD5E0"></div> 1:1 31%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h4>🧩 ASD Cohort (15% ≈ 60 patients)</h4>
+            <p>Children with Autism spectrum conditions continue to receive the full 25 hours as <strong>individualized 1:1 care</strong> across all disciplines. These group-based models apply to the remaining ~340 non-ASD patients. The ASD track includes: 8 NP + 8 RD + 4 KIN/EP + 4 SW/Psych + 1 Flex = 25 hours.</p>
+        </div>
+    </div>
+
+    <!-- ==================== MODEL A TAB ==================== -->
+    <div id="tab-model-a" class="tab-content">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <div style="width:40px;height:40px;border-radius:10px;background:var(--model-a);display:flex;align-items:center;justify-content:center;color:white;font-size:1.3em;font-weight:800;">A</div>
+            <h2>Model A: Group-Heavy Rotation</h2>
+        </div>
+        <p style="color:var(--text-light);margin-bottom:20px;">Maximizes group sessions to free up clinician capacity. Best for programs comfortable running frequent group programming. Provides a simple, repeating monthly rotation of visit types.</p>
+
+        <div class="chart-container">
+            <div class="chart-title">Visit Schedule (24 months)</div>
+            <table class="schedule-table">
+                <thead><tr><th>Visit Type</th><th>Frequency (2 yrs)</th><th>Format</th><th>Duration</th><th>Total Hours</th></tr></thead>
+                <tbody>
+                    <tr><td>NP Medical Visit</td><td>Every 3 months → 8 visits</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>8.0</strong></td></tr>
+                    <tr><td>Nutrition Group (RD-led)</td><td>6 visits</td><td><span class="badge badge-group">Group 8-10</span></td><td>90 min</td><td><strong>9.0</strong></td></tr>
+                    <tr><td>Nutrition 1:1 (RD)</td><td>2 visits</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>2.0</strong></td></tr>
+                    <tr><td>Activity Group (KIN/EP-led)</td><td>3 visits</td><td><span class="badge badge-group">Group 10-12</span></td><td>60 min</td><td><strong>3.0</strong></td></tr>
+                    <tr><td>Activity 1:1 (KIN or EP)</td><td>1 visit</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>1.0</strong></td></tr>
+                    <tr><td>Mental Health Group (SW/Psych)</td><td>3 visits</td><td><span class="badge badge-group">Group 8-10</span></td><td>90 min</td><td><strong>4.5</strong></td></tr>
+                    <tr><td>Flex / Catch-up</td><td>1 visit</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>1.0</strong></td></tr>
+                    <tr style="background:#EBF8FF;"><td><strong>TOTAL</strong></td><td><strong>24 visits</strong></td><td></td><td></td><td><strong>28.5 hrs</strong></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">📅 Sample Monthly Pattern (repeating 3-month cycle)</div>
+            <div class="flow-diagram">
+                <div class="flow-column">
+                    <div class="flow-box" style="background:var(--primary);">Month 1<br>NP Visit</div>
+                    <div style="font-size:0.75em;color:var(--text-light)">1:1 · 60 min</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-column">
+                    <div class="flow-box" style="background:#4CAF50;">Month 2<br>Nutrition Group</div>
+                    <div style="font-size:0.75em;color:var(--text-light)">Group · 90 min</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-column">
+                    <div class="flow-box" style="background:var(--accent2);">Month 3<br>MH or Activity</div>
+                    <div style="font-size:0.75em;color:var(--text-light)">Group · 60-90 min</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-column">
+                    <div class="flow-box" style="background:var(--primary);">Month 4<br>NP Visit</div>
+                    <div style="font-size:0.75em;color:var(--text-light)">1:1 · 60 min</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-column">
+                    <div class="flow-box" style="background:#FF9800;">Month 5<br>RD 1:1 or<br>Activity Group</div>
+                    <div style="font-size:0.75em;color:var(--text-light)">Varies</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-column">
+                    <div class="flow-box" style="background:#4CAF50;">Month 6<br>Nutrition Group</div>
+                    <div style="font-size:0.75em;color:var(--text-light)">Group · 90 min</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">🍎 Nutrition Group Curriculum (6-session rotation)</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+                <div style="background:#E8F5E9;padding:16px;border-radius:10px;text-align:center;"><div style="font-size:1.5em;">📋</div><div style="font-weight:600;margin-top:4px;">Session 1</div><div style="font-size:0.85em;color:var(--text-light);">Label Reading</div></div>
+                <div style="background:#E8F5E9;padding:16px;border-radius:10px;text-align:center;"><div style="font-size:1.5em;">🗓️</div><div style="font-weight:600;margin-top:4px;">Session 2</div><div style="font-size:0.85em;color:var(--text-light);">Meal Planning</div></div>
+                <div style="background:#E8F5E9;padding:16px;border-radius:10px;text-align:center;"><div style="font-size:1.5em;">🍿</div><div style="font-weight:600;margin-top:4px;">Session 3</div><div style="font-size:0.85em;color:var(--text-light);">Smart Snacking</div></div>
+                <div style="background:#E8F5E9;padding:16px;border-radius:10px;text-align:center;"><div style="font-size:1.5em;">🥤</div><div style="font-weight:600;margin-top:4px;">Session 4</div><div style="font-size:0.85em;color:var(--text-light);">Beverages</div></div>
+                <div style="background:#E8F5E9;padding:16px;border-radius:10px;text-align:center;"><div style="font-size:1.5em;">🍔</div><div style="font-weight:600;margin-top:4px;">Session 5</div><div style="font-size:0.85em;color:var(--text-light);">Eating Out</div></div>
+                <div style="background:#E8F5E9;padding:16px;border-radius:10px;text-align:center;"><div style="font-size:1.5em;">👨‍🍳</div><div style="font-weight:600;margin-top:4px;">Session 6</div><div style="font-size:0.85em;color:var(--text-light);">Family Cooking</div></div>
+            </div>
+        </div>
+
+        <div class="proscons">
+            <div class="pros">
+                <h4>✅ Strengths</h4>
+                <ul>
+                    <li>Simple repeating structure — easy to schedule</li>
+                    <li>High group ratio maximizes clinician efficiency</li>
+                    <li>3.5 hr buffer above 25-hr minimum absorbs no-shows</li>
+                    <li>Peer support benefits from group setting</li>
+                    <li>Moderate scheduling complexity</li>
+                </ul>
+            </div>
+            <div class="cons">
+                <h4>⚠️ Considerations</h4>
+                <ul>
+                    <li>Less personalization for complex patients</li>
+                    <li>Requires families to attend scheduled group times</li>
+                    <li>Group no-shows harder to make up than 1:1</li>
+                    <li>May not suit all family schedules</li>
+                    <li>Clinicians need group facilitation skills</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODEL B TAB ==================== -->
+    <div id="tab-model-b" class="tab-content">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <div style="width:40px;height:40px;border-radius:10px;background:var(--model-b);display:flex;align-items:center;justify-content:center;color:white;font-size:1.3em;font-weight:800;">B</div>
+            <h2>Model B: Hybrid Tiered (Intensity-Matched)</h2>
+        </div>
+        <p style="color:var(--text-light);margin-bottom:20px;">Patients are stratified by complexity at intake. Lower-complexity patients receive more group-based care while higher-complexity patients receive more 1:1 attention. Tiers can be reassessed at 12 months.</p>
+
+        <div class="chart-container">
+            <div class="chart-title">🏷️ Tier Distribution (of ~340 non-ASD patients)</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
+                <div style="background:linear-gradient(135deg,#E3F2FD,#BBDEFB);padding:24px;border-radius:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                        <h4 style="color:#1565C0;">Tier 1 — Standard</h4>
+                        <span style="background:#1565C0;color:white;padding:4px 12px;border-radius:20px;font-size:0.85em;font-weight:700;">~170 pts (50%)</span>
+                    </div>
+                    <p style="font-size:0.9em;margin:8px 0;color:#1565C0;">BMI 95th–99th, no major comorbidities</p>
+                    <div style="font-weight:700;font-size:1.1em;color:#0D47A1;">26.5 hrs · 22 visits · 55% group</div>
+                </div>
+                <div style="background:linear-gradient(135deg,#E8F5E9,#C8E6C9);padding:24px;border-radius:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                        <h4 style="color:#2E7D32;">Tier 2 — Moderate</h4>
+                        <span style="background:#2E7D32;color:white;padding:4px 12px;border-radius:20px;font-size:0.85em;font-weight:700;">~120 pts (35%)</span>
+                    </div>
+                    <p style="font-size:0.9em;margin:8px 0;color:#2E7D32;">BMI ≥99th or 1–2 comorbidities</p>
+                    <div style="font-weight:700;font-size:1.1em;color:#1B5E20;">27.5 hrs · 24 visits · 45% group</div>
+                </div>
+                <div style="background:linear-gradient(135deg,#FFF3E0,#FFE0B2);padding:24px;border-radius:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                        <h4 style="color:#E65100;">Tier 3 — Complex</h4>
+                        <span style="background:#E65100;color:white;padding:4px 12px;border-radius:20px;font-size:0.85em;font-weight:700;">~50 pts (15%)</span>
+                    </div>
+                    <p style="font-size:0.9em;margin:8px 0;color:#E65100;">Severe obesity + multiple comorbidities + psych needs</p>
+                    <div style="font-weight:700;font-size:1.1em;color:#BF360C;">28.5 hrs · 26 visits · 30% group</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">📋 Visit Schedule by Tier</div>
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+                <button class="nav-tab active" onclick="showTier(1,this)" style="flex:none;min-width:auto;padding:8px 20px;">Tier 1</button>
+                <button class="nav-tab" onclick="showTier(2,this)" style="flex:none;min-width:auto;padding:8px 20px;">Tier 2</button>
+                <button class="nav-tab" onclick="showTier(3,this)" style="flex:none;min-width:auto;padding:8px 20px;">Tier 3</button>
+            </div>
+
+            <div id="tier-1" class="tier-table">
+                <table class="schedule-table">
+                    <thead><tr><th>Visit Type</th><th>#</th><th>Format</th><th>Duration</th><th>Hours</th></tr></thead>
+                    <tbody>
+                        <tr><td>NP Medical</td><td>8</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>8.0</strong></td></tr>
+                        <tr><td>Nutrition Group</td><td>7</td><td><span class="badge badge-group">Group</span></td><td>90 min</td><td><strong>10.5</strong></td></tr>
+                        <tr><td>Nutrition 1:1</td><td>1</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>1.0</strong></td></tr>
+                        <tr><td>Activity Group</td><td>4</td><td><span class="badge badge-group">Group</span></td><td>60 min</td><td><strong>4.0</strong></td></tr>
+                        <tr><td>MH Group</td><td>2</td><td><span class="badge badge-group">Group</span></td><td>90 min</td><td><strong>3.0</strong></td></tr>
+                        <tr style="background:#E8F5E9;"><td><strong>TOTAL</strong></td><td><strong>22</strong></td><td></td><td></td><td><strong>26.5</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="tier-2" class="tier-table" style="display:none;">
+                <table class="schedule-table">
+                    <thead><tr><th>Visit Type</th><th>#</th><th>Format</th><th>Duration</th><th>Hours</th></tr></thead>
+                    <tbody>
+                        <tr><td>NP Medical</td><td>8</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>8.0</strong></td></tr>
+                        <tr><td>Nutrition Group</td><td>5</td><td><span class="badge badge-group">Group</span></td><td>90 min</td><td><strong>7.5</strong></td></tr>
+                        <tr><td>Nutrition 1:1</td><td>3</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>3.0</strong></td></tr>
+                        <tr><td>Activity Group</td><td>2</td><td><span class="badge badge-group">Group</span></td><td>60 min</td><td><strong>2.0</strong></td></tr>
+                        <tr><td>Activity 1:1</td><td>2</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>2.0</strong></td></tr>
+                        <tr><td>MH Group</td><td>2</td><td><span class="badge badge-group">Group</span></td><td>90 min</td><td><strong>3.0</strong></td></tr>
+                        <tr><td>Psychology/SW 1:1</td><td>2</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>2.0</strong></td></tr>
+                        <tr style="background:#E8F5E9;"><td><strong>TOTAL</strong></td><td><strong>24</strong></td><td></td><td></td><td><strong>27.5</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="tier-3" class="tier-table" style="display:none;">
+                <table class="schedule-table">
+                    <thead><tr><th>Visit Type</th><th>#</th><th>Format</th><th>Duration</th><th>Hours</th></tr></thead>
+                    <tbody>
+                        <tr><td>NP Medical</td><td>10</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>10.0</strong></td></tr>
+                        <tr><td>Nutrition Group</td><td>3</td><td><span class="badge badge-group">Group</span></td><td>90 min</td><td><strong>4.5</strong></td></tr>
+                        <tr><td>Nutrition 1:1</td><td>4</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>4.0</strong></td></tr>
+                        <tr><td>Activity 1:1</td><td>3</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>3.0</strong></td></tr>
+                        <tr><td>MH Group</td><td>2</td><td><span class="badge badge-group">Group</span></td><td>90 min</td><td><strong>3.0</strong></td></tr>
+                        <tr><td>Psychology/SW 1:1</td><td>3</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>3.0</strong></td></tr>
+                        <tr><td>Flex</td><td>1</td><td><span class="badge badge-individual">1:1</span></td><td>60 min</td><td><strong>1.0</strong></td></tr>
+                        <tr style="background:#E8F5E9;"><td><strong>TOTAL</strong></td><td><strong>26</strong></td><td></td><td></td><td><strong>28.5</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Group vs 1:1 by tier visual -->
+        <div class="chart-container">
+            <div class="chart-title">📊 Group vs 1:1 Hours by Tier</div>
+            <div style="display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin:20px 0;">
+                <div style="text-align:center;">
+                    <div style="font-weight:700;margin-bottom:8px;color:#1565C0;">Tier 1</div>
+                    <div style="display:flex;height:180px;gap:8px;align-items:flex-end;">
+                        <div style="width:50px;background:linear-gradient(to top,#1565C0,#42A5F5);border-radius:6px 6px 0 0;height:66%;display:flex;align-items:flex-start;justify-content:center;padding-top:6px;color:white;font-weight:700;font-size:0.8em;">17.5h</div>
+                        <div style="width:50px;background:linear-gradient(to top,#90CAF9,#BBDEFB);border-radius:6px 6px 0 0;height:34%;display:flex;align-items:flex-start;justify-content:center;padding-top:6px;font-weight:700;font-size:0.8em;color:#1565C0;">9h</div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:4px;font-size:0.75em;color:var(--text-light);"><div style="width:50px;">Group</div><div style="width:50px;">1:1</div></div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-weight:700;margin-bottom:8px;color:#2E7D32;">Tier 2</div>
+                    <div style="display:flex;height:180px;gap:8px;align-items:flex-end;">
+                        <div style="width:50px;background:linear-gradient(to top,#2E7D32,#66BB6A);border-radius:6px 6px 0 0;height:45%;display:flex;align-items:flex-start;justify-content:center;padding-top:6px;color:white;font-weight:700;font-size:0.8em;">12.5h</div>
+                        <div style="width:50px;background:linear-gradient(to top,#A5D6A7,#C8E6C9);border-radius:6px 6px 0 0;height:55%;display:flex;align-items:flex-start;justify-content:center;padding-top:6px;font-weight:700;font-size:0.8em;color:#2E7D32;">15h</div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:4px;font-size:0.75em;color:var(--text-light);"><div style="width:50px;">Group</div><div style="width:50px;">1:1</div></div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-weight:700;margin-bottom:8px;color:#E65100;">Tier 3</div>
+                    <div style="display:flex;height:180px;gap:8px;align-items:flex-end;">
+                        <div style="width:50px;background:linear-gradient(to top,#E65100,#FF9800);border-radius:6px 6px 0 0;height:30%;display:flex;align-items:flex-start;justify-content:center;padding-top:6px;color:white;font-weight:700;font-size:0.8em;">7.5h</div>
+                        <div style="width:50px;background:linear-gradient(to top,#FFE0B2,#FFF3E0);border-radius:6px 6px 0 0;height:70%;display:flex;align-items:flex-start;justify-content:center;padding-top:6px;font-weight:700;font-size:0.8em;color:#E65100;">21h</div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:4px;font-size:0.75em;color:var(--text-light);"><div style="width:50px;">Group</div><div style="width:50px;">1:1</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="proscons">
+            <div class="pros">
+                <h4>✅ Strengths</h4>
+                <ul>
+                    <li>Most personalized — matches intensity to need</li>
+                    <li>Complex patients get more 1:1 attention</li>
+                    <li>Clinician time used most efficiently</li>
+                    <li>Can reassess tier at 12 months</li>
+                    <li>Strong clinical rationale for resource allocation</li>
+                </ul>
+            </div>
+            <div class="cons">
+                <h4>⚠️ Considerations</h4>
+                <ul>
+                    <li>Highest scheduling complexity (3 tracks)</li>
+                    <li>Requires intake assessment tool for tiering</li>
+                    <li>More admin overhead to manage</li>
+                    <li>Families may compare and perceive inequity</li>
+                    <li>Staff need to manage multiple pathways</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODEL C TAB ==================== -->
+    <div id="tab-model-c" class="tab-content">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <div style="width:40px;height:40px;border-radius:10px;background:var(--model-c);display:flex;align-items:center;justify-content:center;color:white;font-size:1.3em;font-weight:800;">C</div>
+            <h2>Model C: Block Curriculum + Individual Check-ins</h2>
+        </div>
+        <p style="color:var(--text-light);margin-bottom:20px;">Families move through defined group-based curriculum blocks (6-month phases) interspersed with individual visits. Feels most like a structured "program." New cohorts start every 2–3 months; families who miss a group can attend with the next cohort.</p>
+
+        <div class="chart-container">
+            <div class="chart-title">🗂️ Four Program Phases (click to expand)</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
+                <div class="phase-card" onclick="togglePhase(this)" style="background:linear-gradient(135deg,#E3F2FD,#BBDEFB);padding:20px;border-radius:12px;cursor:pointer;transition:all 0.3s;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4 style="color:#1565C0;">Phase 1: Foundation</h4>
+                        <span style="color:#1565C0;font-weight:700;">Mo 1–6</span>
+                    </div>
+                    <p style="font-size:0.85em;color:#1565C0;margin-top:4px;">Healthy eating basics, movement intro, family engagement</p>
+                    <div class="phase-detail" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(21,101,192,0.2);font-size:0.85em;">
+                        <strong>Groups:</strong> 3× Nutrition (90 min) + 1× Activity (60 min)<br>
+                        <strong>1:1:</strong> 1× NP Intake (60 min) + 1× NP Follow-up (60 min)<br>
+                        <strong>Phase Total: 7.5 hrs</strong>
+                    </div>
+                </div>
+                <div class="phase-card" onclick="togglePhase(this)" style="background:linear-gradient(135deg,#E8F5E9,#C8E6C9);padding:20px;border-radius:12px;cursor:pointer;transition:all 0.3s;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4 style="color:#2E7D32;">Phase 2: Building Skills</h4>
+                        <span style="color:#2E7D32;font-weight:700;">Mo 7–12</span>
+                    </div>
+                    <p style="font-size:0.85em;color:#2E7D32;margin-top:4px;">Meal planning, active living, self-esteem & body image</p>
+                    <div class="phase-detail" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(46,125,50,0.2);font-size:0.85em;">
+                        <strong>Groups:</strong> 2× Nutrition (90 min) + 1× Activity (60 min) + 1× MH (90 min)<br>
+                        <strong>1:1:</strong> 1× NP (60 min) + 1× RD (60 min)<br>
+                        <strong>Phase Total: 8.5 hrs</strong>
+                    </div>
+                </div>
+                <div class="phase-card" onclick="togglePhase(this)" style="background:linear-gradient(135deg,#FFF3E0,#FFE0B2);padding:20px;border-radius:12px;cursor:pointer;transition:all 0.3s;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4 style="color:#E65100;">Phase 3: Deepening</h4>
+                        <span style="color:#E65100;font-weight:700;">Mo 13–18</span>
+                    </div>
+                    <p style="font-size:0.85em;color:#E65100;margin-top:4px;">Eating out/social situations, barriers, parent strategies</p>
+                    <div class="phase-detail" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(230,81,0,0.2);font-size:0.85em;">
+                        <strong>Groups:</strong> 2× Nutrition (90 min) + 1× Activity (60 min) + 1× Parent MH (90 min)<br>
+                        <strong>1:1:</strong> 1× NP (60 min) + 1× KIN/EP (60 min)<br>
+                        <strong>Phase Total: 8.0 hrs</strong>
+                    </div>
+                </div>
+                <div class="phase-card" onclick="togglePhase(this)" style="background:linear-gradient(135deg,#FCE4EC,#F8BBD0);padding:20px;border-radius:12px;cursor:pointer;transition:all 0.3s;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4 style="color:#AD1457;">Phase 4: Maintenance</h4>
+                        <span style="color:#AD1457;font-weight:700;">Mo 19–24</span>
+                    </div>
+                    <p style="font-size:0.85em;color:#AD1457;margin-top:4px;">Relapse prevention, independence, transition to community</p>
+                    <div class="phase-detail" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(173,20,87,0.2);font-size:0.85em;">
+                        <strong>Groups:</strong> 1× Nutrition (90 min) + 1× Activity (60 min) + 1× MH (90 min)<br>
+                        <strong>1:1:</strong> 1× NP (60 min) + 1× RD (60 min) + 1× Graduation NP (60 min)<br>
+                        <strong>Phase Total: 5.5 hrs</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">Hour Tally Summary</div>
+            <table class="schedule-table">
+                <thead><tr><th>Component</th><th>Count (2 yrs)</th><th>Duration</th><th>Total Hours</th></tr></thead>
+                <tbody>
+                    <tr><td>NP 1:1 visits</td><td>6</td><td>60 min</td><td><strong>6.0</strong></td></tr>
+                    <tr><td>RD 1:1 visits</td><td>2</td><td>60 min</td><td><strong>2.0</strong></td></tr>
+                    <tr><td>KIN/EP 1:1 visit</td><td>1</td><td>60 min</td><td><strong>1.0</strong></td></tr>
+                    <tr><td>Nutrition Groups</td><td>8</td><td>90 min</td><td><strong>12.0</strong></td></tr>
+                    <tr><td>Activity Groups</td><td>4</td><td>60 min</td><td><strong>4.0</strong></td></tr>
+                    <tr><td>Mental Health Groups</td><td>3</td><td>90 min</td><td><strong>4.5</strong></td></tr>
+                    <tr style="background:#FFF8E1;"><td><strong>TOTAL</strong></td><td><strong>24 touchpoints</strong></td><td></td><td><strong>29.5 hrs</strong></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="proscons">
+            <div class="pros">
+                <h4>✅ Strengths</h4>
+                <ul>
+                    <li>Lowest scheduling complexity — fixed calendar</li>
+                    <li>Curriculum fidelity — every family gets same content</li>
+                    <li>Largest buffer (+4.5 hrs) absorbs cancellations</li>
+                    <li>Built-in make-up: missed group → join next cohort</li>
+                    <li>Clinicians prep once, deliver repeatedly</li>
+                    <li>Feels like a cohesive "program" to families</li>
+                </ul>
+            </div>
+            <div class="cons">
+                <h4>⚠️ Considerations</h4>
+                <ul>
+                    <li>Most group-heavy (69%) — less individual flexibility</li>
+                    <li>Complex patients may need add-on 1:1 sessions</li>
+                    <li>Requires space for regular group sessions</li>
+                    <li>Curriculum development upfront investment</li>
+                    <li>Less responsive to individual pace</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== COMPARE TAB ==================== -->
+    <div id="tab-compare" class="tab-content">
+        <h2 style="margin-bottom:16px;">⚖️ Side-by-Side Comparison</h2>
+
+        <div class="comparison-table-wrapper">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>🔵 Model A<br><small>Group-Heavy</small></th>
+                        <th>🟢 Model B<br><small>Hybrid Tiered</small></th>
+                        <th>🟡 Model C<br><small>Block Curriculum</small></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Care Hours Delivered</td><td><strong>28.5 hrs</strong></td><td><strong>26.5–28.5 hrs</strong></td><td><strong>29.5 hrs</strong></td></tr>
+                    <tr><td>Buffer Above 25-hr Min</td><td>+3.5 hrs</td><td>+1.5–3.5 hrs</td><td>+4.5 hrs</td></tr>
+                    <tr><td>% Group Sessions</td><td>58%</td><td>30–55%</td><td>69%</td></tr>
+                    <tr><td>Total Visits (2 yrs)</td><td>24</td><td>22–26</td><td>24</td></tr>
+                    <tr>
+                        <td>Scheduling Complexity</td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span></td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></td>
+                        <td><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span><span class="star empty">★</span></td>
+                    </tr>
+                    <tr>
+                        <td>Personalization</td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span></td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span></td>
+                    </tr>
+                    <tr>
+                        <td>Clinician Prep Load</td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span></td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></td>
+                        <td><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span><span class="star empty">★</span></td>
+                    </tr>
+                    <tr>
+                        <td>Peer Support Benefits</td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span></td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></td>
+                    </tr>
+                    <tr>
+                        <td>No-Show Resilience</td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span></td>
+                        <td><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></td>
+                    </tr>
+                    <tr><td>Best Suited For</td><td style="font-size:0.85em;">Teams comfortable with groups; want simplicity</td><td style="font-size:0.85em;">Wide acuity range; want precision</td><td style="font-size:0.85em;">Structure, consistency, easy onboarding</td></tr>
+                    <tr><td>ASD Accommodation</td><td>✅ Full 1:1 track</td><td>✅ Full 1:1 track</td><td>✅ Full 1:1 track</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Radar Chart -->
+        <div class="chart-container">
+            <div class="chart-title">🎯 Visual Comparison Radar</div>
+            <div style="display:flex;justify-content:center;">
+                <canvas id="radarCanvas" width="500" height="400"></canvas>
+            </div>
+            <div style="display:flex;gap:24px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--model-a)"></div> Model A</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--model-b)"></div> Model B</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--model-c)"></div> Model C</div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div style="margin-top:30px;">
+            <h3 style="margin-bottom:16px;">💡 Key Recommendations (All Models)</h3>
+            <div class="rec-card" style="border-left-color:#4CAF50;">
+                <h4>📊 No-Show Buffer</h4>
+                <p>All models intentionally exceed 25 hours. With typical 15–25% no-show rates, scheduling 27–30 hours ensures 25 are actually delivered.</p>
+            </div>
+            <div class="rec-card" style="border-left-color:var(--primary);">
+                <h4>💻 Virtual Group Option</h4>
+                <p>Offering some groups virtually (especially nutrition and parent MH groups) could improve attendance and reduce space constraints.</p>
+            </div>
+            <div class="rec-card" style="border-left-color:var(--accent);">
+                <h4>🧠 Psychology/SW as Consulted</h4>
+                <p>Across all models, Psychology and Social Work contribute primarily through group facilitation and as-needed 1:1 consults, preserving capacity for patients who truly need individualized mental health support.</p>
+            </div>
+            <div class="rec-card" style="border-left-color:var(--accent2);">
+                <h4>📈 Tracking Dashboard</h4>
+                <p>A simple dashboard tracking cumulative care hours per patient helps identify anyone falling behind early enough to intervene.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== STAFFING TAB ==================== -->
+    <div id="tab-staffing" class="tab-content">
+        <h2 style="margin-bottom:16px;">👥 Team Staffing & Capacity</h2>
+        <p style="color:var(--text-light);margin-bottom:20px;">Based on ~1,400 direct clinical hours per 1.0 FTE per year.</p>
+
+        <div class="staff-grid">
+            <div class="staff-card">
+                <div class="staff-icon" style="background:#E3F2FD;">🩺</div>
+                <div class="staff-name">Nurse Practitioners</div>
+                <div class="staff-fte">2 × 1.0 FTE</div>
+                <div class="staff-hours">2,800 hrs/yr</div>
+            </div>
+            <div class="staff-card">
+                <div class="staff-icon" style="background:#E8F5E9;">🥗</div>
+                <div class="staff-name">Dietitian 1</div>
+                <div class="staff-fte">1.0 FTE</div>
+                <div class="staff-hours">1,400 hrs/yr</div>
+            </div>
+            <div class="staff-card">
+                <div class="staff-icon" style="background:#E8F5E9;">🥗</div>
+                <div class="staff-name">Dietitian 2</div>
+                <div class="staff-fte">0.6 FTE</div>
+                <div class="staff-hours">840 hrs/yr</div>
+            </div>
+            <div class="staff-card">
+                <div class="staff-icon" style="background:#E8F5E9;">🥗</div>
+                <div class="staff-name">Dietitian 3</div>
+                <div class="staff-fte">0.6 FTE</div>
+                <div class="staff-hours">840 hrs/yr</div>
+            </div>
+            <div class="staff-card">
+                <div class="staff-icon" style="background:#FFF3E0;">🏃</div>
+                <div class="staff-name">Kinesiologist</div>
+                <div class="staff-fte">0.6 FTE</div>
+                <div class="staff-hours">840 hrs/yr</div>
+            </div>
+            <div class="staff-card">
+                <div class="staff-icon" style="background:#FFF3E0;">💪</div>
+                <div class="staff-name">Exercise Physiologist</div>
+                <div class="staff-fte">1.0 FTE</div>
+                <div class="staff-hours">1,400 hrs/yr</div>
+            </div>
+            <div class="staff-card">
+                <div class="staff-icon" style="background:#FCE4EC;">💬</div>
+                <div class="staff-name">Social Worker</div>
+                <div class="staff-fte">1.0 FTE</div>
+                <div class="staff-hours">1,400 hrs/yr</div>
+            </div>
+            <div class="staff-card">
+                <div class="staff-icon" style="background:#FCE4EC;">🧠</div>
+                <div class="staff-name">Psychologist</div>
+                <div class="staff-fte">1.0 FTE</div>
+                <div class="staff-hours">1,400 hrs/yr</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">⚡ Capacity vs Demand</div>
+            <div class="capacity-result">
+                <div class="capacity-card blue">
+                    <div class="big-num">10,920</div>
+                    <div class="metric-label">Total Available Hrs/Year</div>
+                </div>
+                <div class="capacity-card orange">
+                    <div class="big-num">~5,000</div>
+                    <div class="metric-label">Required Hrs/Year (400 pts × 25h ÷ 2)</div>
+                </div>
+                <div class="capacity-card green">
+                    <div class="big-num">~5,920</div>
+                    <div class="metric-label">Surplus Capacity / Year</div>
+                </div>
+                <div class="capacity-card green">
+                    <div class="big-num">✅</div>
+                    <div class="metric-label">All 3 Models Feasible</div>
+                </div>
+            </div>
+            <div class="info-box" style="margin-top:16px;">
+                <h4>📝 Note on Group Efficiency</h4>
+                <p>Group sessions multiply effective capacity. A 90-min nutrition group with 10 families delivers 15 patient-hours of care while consuming only 1.5 clinician-hours. This is why even with "surplus" clinician time, the program currently may not be meeting 25 hrs — if everything is 1:1, one clinician produces only one patient-hour per hour worked. Groups are the key multiplier.</p>
+            </div>
+        </div>
+
+        <!-- Staff utilization by model -->
+        <div class="chart-container">
+            <div class="chart-title">📊 Estimated Annual Clinician Hours by Model</div>
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th>Discipline</th>
+                        <th>Available hrs/yr</th>
+                        <th>Model A</th>
+                        <th>Model B</th>
+                        <th>Model C</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>NPs (2.0 FTE)</td><td>2,800</td><td>~1,600</td><td>~1,700</td><td>~1,200</td></tr>
+                    <tr><td>RDs (2.2 FTE)</td><td>3,080</td><td>~1,200</td><td>~1,400</td><td>~1,100</td></tr>
+                    <tr><td>KIN + EP (1.6 FTE)</td><td>2,240</td><td>~600</td><td>~800</td><td>~700</td></tr>
+                    <tr><td>SW + Psych (2.0 FTE)</td><td>2,800</td><td>~500</td><td>~700</td><td>~450</td></tr>
+                    <tr style="background:#EBF8FF;">
+                        <td><strong>TOTAL</strong></td>
+                        <td><strong>10,920</strong></td>
+                        <td><strong>~3,900</strong></td>
+                        <td><strong>~4,600</strong></td>
+                        <td><strong>~3,450</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size:0.85em;color:var(--text-light);margin-top:8px;">* Clinician hours are lower than patient care hours due to the group multiplier effect. Remaining clinician time is available for documentation, care coordination, program development, ASD 1:1 caseload, and other duties.</p>
+        </div>
+    </div>
+
+    <!-- ==================== CALCULATOR TAB ==================== -->
+    <div id="tab-calculator" class="tab-content">
+        <h2 style="margin-bottom:16px;">🧮 What-If Calculator</h2>
+        <p style="color:var(--text-light);margin-bottom:20px;">Adjust the sliders to explore different scenarios and see how they impact care hour delivery and staffing feasibility.</p>
+
+        <div class="slider-section">
+            <div class="chart-title">Adjust Parameters</div>
+
+            <div class="slider-row">
+                <span class="slider-label">New Patients / Year</span>
+                <input type="range" class="slider-input" id="sliderPatients" min="100" max="400" value="200" oninput="updateCalculator()">
+                <span class="slider-value" id="valPatients">200</span>
+            </div>
+
+            <div class="slider-row">
+                <span class="slider-label">Target Hours per Patient</span>
+                <input type="range" class="slider-input" id="sliderHours" min="15" max="40" value="25" oninput="updateCalculator()">
+                <span class="slider-value" id="valHours">25</span>
+            </div>
+
+            <div class="slider-row">
+                <span class="slider-label">% ASD (1:1 only)</span>
+                <input type="range" class="slider-input" id="sliderASD" min="5" max="30" value="15" oninput="updateCalculator()">
+                <span class="slider-value" id="valASD">15%</span>
+            </div>
+
+            <div class="slider-row">
+                <span class="slider-label">Avg Group Size</span>
+                <input type="range" class="slider-input" id="sliderGroupSize" min="4" max="15" value="10" oninput="updateCalculator()">
+                <span class="slider-value" id="valGroupSize">10</span>
+            </div>
+
+            <div class="slider-row">
+                <span class="slider-label">% Group Sessions (non-ASD)</span>
+                <input type="range" class="slider-input" id="sliderGroupPct" min="20" max="80" value="58" oninput="updateCalculator()">
+                <span class="slider-value" id="valGroupPct">58%</span>
+            </div>
+
+            <div class="slider-row">
+                <span class="slider-label">No-Show Rate</span>
+                <input type="range" class="slider-input" id="sliderNoShow" min="0" max="40" value="20" oninput="updateCalculator()">
+                <span class="slider-value" id="valNoShow">20%</span>
+            </div>
+        </div>
+
+        <div class="capacity-result" id="calcResults">
+            <!-- Filled by JS -->
+        </div>
+
+        <div class="chart-container" id="calcBreakdown">
+            <!-- Filled by JS -->
+        </div>
+    </div>
+
+</div><!-- end container -->
+
+<script>
+// ==================== TAB NAVIGATION ====================
+function showTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-tabs .nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+    document.querySelectorAll('.nav-tabs .nav-tab').forEach(t => {
+        if (t.textContent.toLowerCase().includes(tabId.replace('-', ' ')) ||
+            (tabId === 'overview' && t.textContent.includes('Overview')) ||
+            (tabId === 'model-a' && t.textContent.includes('Model A')) ||
+            (tabId === 'model-b' && t.textContent.includes('Model B')) ||
+            (tabId === 'model-c' && t.textContent.includes('Model C')) ||
+            (tabId === 'compare' && t.textContent.includes('Compare')) ||
+            (tabId === 'staffing' && t.textContent.includes('Staffing')) ||
+            (tabId === 'calculator' && t.textContent.includes('Calculator'))) {
+            t.classList.add('active');
+        }
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Trigger animations
+    if (tabId === 'overview') { setTimeout(buildBarChart, 200); setTimeout(drawDonuts, 300); }
+    if (tabId === 'compare') { setTimeout(drawRadar, 300); }
+    if (tabId === 'calculator') { updateCalculator(); }
+}
+
+// ==================== TIER TABS (MODEL B) ====================
+function showTier(tier, btn) {
+    document.querySelectorAll('.tier-table').forEach(t => t.style.display = 'none');
+    document.getElementById('tier-' + tier).style.display = 'block';
+    btn.parentElement.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+// ==================== PHASE TOGGLE (MODEL C) ====================
+function togglePhase(el) {
+    const detail = el.querySelector('.phase-detail');
+    if (detail.style.display === 'none') {
+        detail.style.display = 'block';
+        el.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15)';
+    } else {
+        detail.style.display = 'none';
+        el.style.boxShadow = 'none';
+    }
+}
+
+// ==================== BAR CHART ====================
+function buildBarChart() {
+    const container = document.getElementById('hoursChart');
+    container.innerHTML = '';
+
+    const data = [
+        { label: 'NP Medical', a: 8, b: 8, c: 6 },
+        { label: 'Nutrition', a: 11, b: 11.5, c: 14 },
+        { label: 'Activity', a: 4, b: 4, c: 5 },
+        { label: 'Mental Health', a: 4.5, b: 3, c: 4.5 },
+        { label: 'Flex', a: 1, b: 0, c: 0 },
+    ];
+
+    const maxVal = 15;
+
+    data.forEach(d => {
+        const group = document.createElement('div');
+        group.className = 'bar-group';
+
+        [
+            { val: d.a, color: '#4A90D9' },
+            { val: d.b, color: '#6BC5A0' },
+            { val: d.c, color: '#F5A623' }
+        ].forEach(bar => {
+            const barEl = document.createElement('div');
+            barEl.className = 'bar';
+            barEl.style.background = bar.color;
+            barEl.style.height = '0%';
+            barEl.innerHTML = `<div class="bar-value" style="color:${bar.color}">${bar.val}h</div>`;
+            group.appendChild(barEl);
+
+            setTimeout(() => {
+                barEl.style.height = (bar.val / maxVal * 100) + '%';
+            }, 100);
+        });
+
+        container.appendChild(group);
+    });
+}
+
+// ==================== DONUT CHARTS ====================
+function drawDonut(canvasId, groupPct, color) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const cx = 90, cy = 90, r = 70, lw = 24;
+
+    ctx.clearRect(0, 0, 180, 180);
+
+    // Background
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = lw;
+    ctx.stroke();
+
+    // Foreground
+    const angle = (groupPct / 100) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + angle);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lw;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Center text
+    ctx.fillStyle = '#2D3748';
+    ctx.font = 'bold 28px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(groupPct + '%', cx, cy - 6);
+    ctx.font = '12px -apple-system, sans-serif';
+    ctx.fillStyle = '#718096';
+    ctx.fillText('Group', cx, cy + 16);
+}
+
+function drawDonuts() {
+    drawDonut('donutA', 58, '#4A90D9');
+    drawDonut('donutB', 42, '#6BC5A0');
+    drawDonut('donutC', 69, '#F5A623');
+}
+
+// ==================== RADAR CHART ====================
+function drawRadar() {
+    const canvas = document.getElementById('radarCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const cx = w / 2, cy = h / 2 + 10;
+    const maxR = 150;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const labels = ['Care Hours', 'Personalization', 'Scheduling Ease', 'Peer Support', 'No-Show Resilience', 'Low Prep Load'];
+    const n = labels.length;
+
+    // Model scores (out of 5)
+    const models = {
+        A: [4, 2, 3.5, 3.5, 3, 3],
+        B: [3.5, 4.5, 2, 2, 2, 2.5],
+        C: [4.5, 2, 4.5, 4, 4, 4.5]
+    };
+
+    const colors = { A: '#4A90D9', B: '#6BC5A0', C: '#F5A623' };
+
+    // Draw grid
+    for (let level = 1; level <= 5; level++) {
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+            const angle = (Math.PI * 2 * (i % n)) / n - Math.PI / 2;
+            const r = (level / 5) * maxR;
+            const x = cx + r * Math.cos(angle);
+            const y = cy + r * Math.sin(angle);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = '#E2E8F0';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+
+    // Draw axes and labels
+    for (let i = 0; i < n; i++) {
+        const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+        const x = cx + maxR * Math.cos(angle);
+        const y = cy + maxR * Math.sin(angle);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = '#CBD5E0';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Labels
+        const lx = cx + (maxR + 28) * Math.cos(angle);
+        const ly = cy + (maxR + 28) * Math.sin(angle);
+        ctx.fillStyle = '#4A5568';
+        ctx.font = '11px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(labels[i], lx, ly);
+    }
+
+    // Draw model polygons
+    Object.entries(models).forEach(([key, scores]) => {
+        ctx.beginPath();
+        scores.forEach((score, i) => {
+            const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+            const r = (score / 5) * maxR;
+            const x = cx + r * Math.cos(angle);
+            const y = cy + r * Math.sin(angle);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.closePath();
+        ctx.strokeStyle = colors[key];
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.fillStyle = colors[key] + '25';
+        ctx.fill();
+
+        // Dots
+        scores.forEach((score, i) => {
+            const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+            const r = (score / 5) * maxR;
+            const x = cx + r * Math.cos(angle);
+            const y = cy + r * Math.sin(angle);
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = colors[key];
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        });
+    });
+}
+
+// ==================== CALCULATOR ====================
+function updateCalculator() {
+    const newPts = parseInt(document.getElementById('sliderPatients').value);
+    const targetHrs = parseInt(document.getElementById('sliderHours').value);
+    const asdPct = parseInt(document.getElementById('sliderASD').value);
+    const groupSize = parseInt(document.getElementById('sliderGroupSize').value);
+    const groupPct = parseInt(document.getElementById('sliderGroupPct').value);
+    const noShowPct = parseInt(document.getElementById('sliderNoShow').value);
+
+    document.getElementById('valPatients').textContent = newPts;
+    document.getElementById('valHours').textContent = targetHrs;
+    document.getElementById('valASD').textContent = asdPct + '%';
+    document.getElementById('valGroupSize').textContent = groupSize;
+    document.getElementById('valGroupPct').textContent = groupPct + '%';
+    document.getElementById('valNoShow').textContent = noShowPct + '%';
+
+    const totalActive = newPts * 2;
+    const asdPatients = Math.round(totalActive * asdPct / 100);
+    const nonASD = totalActive - asdPatients;
+
+    // Scheduled hours need to be higher to account for no-shows
+    const scheduledHrsPerPt = targetHrs / (1 - noShowPct / 100);
+
+    // Total patient-hours needed per year (divided by 2 since it's a 2-year program)
+    const totalPatientHrsYear = (totalActive * scheduledHrsPerPt) / 2;
+
+    // ASD patients: all 1:1, so clinician hrs = patient hrs
+    const asdClinicianHrsYear = (asdPatients * scheduledHrsPerPt) / 2;
+
+    // Non-ASD: group sessions use multiplier
+    const nonASDPatientHrsYear = (nonASD * scheduledHrsPerPt) / 2;
+    const groupPatientHrs = nonASDPatientHrsYear * groupPct / 100;
+    const oneOnOnePatientHrs = nonASDPatientHrsYear * (100 - groupPct) / 100;
+
+    // Clinician hours: 1:1 = 1:1, group = patient hrs / group size
+    const groupClinicianHrs = groupPatientHrs / groupSize;
+    const totalClinicianHrsYear = asdClinicianHrsYear + oneOnOnePatientHrs + groupClinicianHrs;
+
+    const availableHrs = 10920;
+    const surplus = availableHrs - totalClinicianHrsYear;
+    const feasible = surplus > 0;
+
+    const resultsContainer = document.getElementById('calcResults');
+    resultsContainer.innerHTML = `
+        <div class="capacity-card blue">
+            <div class="big-num">${totalActive}</div>
+            <div class="metric-label">Total Active Patients</div>
+        </div>
+        <div class="capacity-card orange">
+            <div class="big-num">${scheduledHrsPerPt.toFixed(1)}</div>
+            <div class="metric-label">Scheduled Hrs/Patient (to deliver ${targetHrs} after ${noShowPct}% no-shows)</div>
+        </div>
+        <div class="capacity-card blue">
+            <div class="big-num">${Math.round(totalPatientHrsYear).toLocaleString()}</div>
+            <div class="metric-label">Patient-Hours Needed / Year</div>
+        </div>
+        <div class="capacity-card ${feasible ? 'green' : 'red'}">
+            <div class="big-num">${Math.round(totalClinicianHrsYear).toLocaleString()}</div>
+            <div class="metric-label">Clinician-Hours Required / Year</div>
+        </div>
+        <div class="capacity-card blue">
+            <div class="big-num">10,920</div>
+            <div class="metric-label">Clinician-Hours Available / Year</div>
+        </div>
+        <div class="capacity-card ${feasible ? 'green' : 'red'}">
+            <div class="big-num">${feasible ? '✅' : '❌'} ${surplus > 0 ? '+' : ''}${Math.round(surplus).toLocaleString()}</div>
+            <div class="metric-label">${feasible ? 'Surplus — Feasible!' : 'Deficit — Not Feasible'}</div>
+        </div>
+    `;
+
+    const breakdownContainer = document.getElementById('calcBreakdown');
+    const utilizationPct = Math.round((totalClinicianHrsYear / availableHrs) * 100);
+    breakdownContainer.innerHTML = `
+        <div class="chart-title">📊 Clinician Utilization</div>
+        <div class="progress-container" style="margin:20px 0;">
+            <div class="progress-label">
+                <span>Team Utilization</span>
+                <span>${utilizationPct}% of available hours</span>
+            </div>
+            <div class="progress-bar" style="height:30px;">
+                <div class="progress-fill" style="width:${Math.min(utilizationPct, 100)}%;background:${utilizationPct > 95 ? '#E53E3E' : utilizationPct > 80 ? '#F5A623' : '#48BB78'};border-radius:6px;"></div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:20px;">
+            <div style="background:#E3F2FD;padding:16px;border-radius:10px;">
+                <div style="font-weight:700;color:#1565C0;">ASD 1:1 Hours</div>
+                <div style="font-size:1.3em;font-weight:800;color:#0D47A1;">${Math.round(asdClinicianHrsYear).toLocaleString()} hrs/yr</div>
+                <div style="font-size:0.85em;color:#1565C0;">${asdPatients} patients × all 1:1</div>
+            </div>
+            <div style="background:#E8F5E9;padding:16px;border-radius:10px;">
+                <div style="font-weight:700;color:#2E7D32;">Non-ASD 1:1 Hours</div>
+                <div style="font-size:1.3em;font-weight:800;color:#1B5E20;">${Math.round(oneOnOnePatientHrs).toLocaleString()} hrs/yr</div>
+                <div style="font-size:0.85em;color:#2E7D32;">${100 - groupPct}% of non-ASD care</div>
+            </div>
+            <div style="background:#FFF3E0;padding:16px;border-radius:10px;">
+                <div style="font-weight:700;color:#E65100;">Group Clinician Hours</div>
+                <div style="font-size:1.3em;font-weight:800;color:#BF360C;">${Math.round(groupClinicianHrs).toLocaleString()} hrs/yr</div>
+                <div style="font-size:0.85em;color:#E65100;">${Math.round(groupPatientHrs).toLocaleString()} patient-hrs ÷ ${groupSize} per group</div>
+            </div>
+        </div>
+        <div class="info-box" style="margin-top:20px;">
+            <h4>💡 Interpretation</h4>
+            <p>${feasible
+                ? `With these settings, the team uses <strong>${utilizationPct}%</strong> of available capacity, leaving <strong>${Math.round(surplus).toLocaleString()} hours</strong> for documentation, care coordination, program development, and unexpected demand. ${utilizationPct < 60 ? 'There is significant room to increase patient volume or care hours.' : utilizationPct < 80 ? 'This is a healthy utilization level with adequate buffer.' : 'Utilization is high — consider whether buffer is sufficient for documentation and other non-clinical duties.'}`
+                : `<strong style="color:#C62828;">The current settings exceed team capacity by ${Math.abs(Math.round(surplus)).toLocaleString()} hours.</strong> Consider: increasing group %, increasing group size, reducing target hours, or reducing patient volume.`
+            }</p>
+        </div>
+    `;
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(buildBarChart, 500);
+    setTimeout(drawDonuts, 600);
+});
+</script>
+
+</body>
+</html>
